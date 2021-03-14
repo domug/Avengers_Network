@@ -5,6 +5,7 @@ import time
 import json
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 plt.interactive(False)
 
 ##########################################################################################
@@ -230,7 +231,7 @@ class Analysis_byCharacter(Utils):
         while choice != 4:
             print("어떤 것을 확인하시겠습니까?\n")
             print("1. 인물 기본 정보")
-            print("2. 다른 인물들과의 상호작용")
+            print("2. 다른 캐릭터들과의 상호작용 횟수")
             print("3. 인물의 중요도 변화")
             print("4. 뒤로가기")
             try:
@@ -242,7 +243,7 @@ class Analysis_byCharacter(Utils):
                 Utils.Borderline()
                 print(self.info_dict[self.character])
                 print()
-                input("아무키나 누르세요.")
+                input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
             elif choice == 2:
@@ -251,14 +252,14 @@ class Analysis_byCharacter(Utils):
                 df = self.character_interactions(series)
                 print(df)
                 print()
-                input("아무키나 누르세요.")
+                input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
             elif choice == 3:
                 Utils.Borderline()
                 self.character_importance_change()
                 print()
-                input("아무키나 누르세요.")
+                input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
 
@@ -296,10 +297,10 @@ class Analysis_bySeries(Utils):
 
     def character_interactions(self):
         """상위 n개의 상호작용"""
-        top_n = input("상위 몇개의 상호작용을 보시겠습니까?")
+        top_n = input("상위 몇개의 인물관계를 보시겠습니까?")
         while not top_n.isdigit():
             print("숫자를 입력해주세요.")
-            top_n = input("상위 몇개의 상호작용을 보시겠습니까?")
+            top_n = input("상위 몇개의 인물관계를 보시겠습니까?")
 
         relationships = sorted(self.graphs[int(self.series_no)-1].edges(data=True), key=lambda x: x[2]['weight'], reverse=True)[0:int(top_n)]
         for i in range(len(relationships)):
@@ -309,16 +310,26 @@ class Analysis_bySeries(Utils):
 
     def key_characters(self):
         """상위 n개의 핵심인물"""
-        top_n = input("상위 몇개의 캐릭터를 반환하시겠습니까?")
+        top_n = input("상위 몇개의 캐릭터를 보시겠습니까?")
         while not top_n.isdigit():
             print("숫자를 입력해주세요.")
-            top_n = input("상위 몇개의 캐릭터를 반환하시겠습니까?")
+            top_n = input("상위 몇개의 캐릭터를 보스겠습니까?")
 
         top_characters = self.get_importance_df(self.graphs).T[int(self.series_no) - 1].sort_values(ascending=False)[0:int(top_n)].index
 
         print("{}의 핵심인물 상위 {}명:".format(self.series_name, top_n))
         for i in range(len(top_characters)):
             print("{}. {}".format(i+1, top_characters[i]))
+
+
+
+    def relationship_visualization(self):
+        """인물관계도 출력"""
+        img_path = "avengers{}_viz.png".format(self.series_no)
+        img = mpimg.imread(img_path)
+        imgplot = plt.imshow(img)
+        plt.show()
+
 
 
 
@@ -331,9 +342,9 @@ class Analysis_bySeries(Utils):
         choice = 0
         while choice != 4:
             print("어떤 것을 확인하시겠습니까?\n")
-            print("1. 등장 인물들 간의 상호작용")
+            print("1. 핵심적인 인물 관계")
             print("2. 핵심 등장인물")
-            print("3. 등장인물 그룹핑")
+            print("3. 인물 관계도")
             print("4. 뒤로가기")
             try:
                 choice = int(input(":"))
@@ -344,18 +355,23 @@ class Analysis_bySeries(Utils):
                 Utils.Borderline()
                 self.character_interactions()
                 print()
-                input("아무키나 누르세요.")
+                input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
             elif choice == 2:
                 Utils.Borderline()
                 self.key_characters()
                 print()
-                input("아무키나 누르세요.")
+                input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
             elif choice == 3:
-                pass
+                Utils.Borderline()
+                self.relationship_visualization()
+                print()
+                input("되돌아가려면 아무키나 누르세요.")
+                Utils.Borderline()
+
 
             elif choice == 4:
                 pass
