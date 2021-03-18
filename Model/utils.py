@@ -1,12 +1,15 @@
+# 유틸 클래스 및 함수
+
 import pandas as pd
-import numpy as np
 import difflib
 import time
 import json
 import networkx as nx
+from keyword_extraction import *
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 plt.interactive(False)
+plt.axis("off")
 
 ##########################################################################################
 ##########################################################################################
@@ -58,7 +61,7 @@ class Utils:
         name_dict["CAPTAIN MARVEL"] = 'CAROL DANVERS'
         name_dict["SITWELL"] = 'JASPER SITWELL'
         name_dict["PHIL COULSON"] = "COULSON"
-        name_dict["BARTON"] = "HAWKEYE"
+        name_dict["BARTON"] = "CLINT BARTON"
         name_dict["CLINT"] = "CLINT BARTON"
         name_dict["HAWKEYE"] = "CLINT BARTON"
         name_dict["BANNER"] = "BRUCE BANNER"
@@ -82,6 +85,7 @@ class Utils:
         name_dict["WINTER SOLDIER"] = "BUCKY BARNES"
         name_dict["ANTMAN"] = "SCOTT LANG"
         name_dict["HILL"] = "MARIA HILL"
+
 
         return name_dict
 
@@ -110,7 +114,7 @@ class Utils:
 
     @staticmethod
     def get_edge_df():
-        path = ["avengers1.csv", "avengers2.csv", "avengers3.csv", "avengers4.csv"]
+        path = ["data/avengers1.csv", "data/avengers2.csv", "data/avengers3.csv", "data/avengers4.csv"]
         edges = pd.DataFrame()
         for ele in path:
             df = pd.read_csv(ele)
@@ -178,11 +182,12 @@ class Analysis_byCharacter(Utils):
 
     def __init__(self, character):
         self.character = character
-        with open("info_dict.json", "r") as fb:
+        with open("data/info_dict.json", "r") as fb:
             self.info_dict = json.load(fb)
         self.edges = self.get_edge_df()
         self.graphs = [nx.from_pandas_edgelist(self.edges[self.edges.series == i],
                                                source='Source', target='Target',  edge_attr=['weight']) for i in range(1, 5)]
+
 
     def character_interactions(self, series_no: int):
         """분석1: 특정 시리즈에서 한 캐릭터가 다른 캐릭터들과 상호작용한 횟수
@@ -201,7 +206,6 @@ class Analysis_byCharacter(Utils):
             print("해당 인물은 어벤져스 {}에 등장하지 않았습니다.".format(series_no))
         else:
             print(df)
-
 
 
     def character_importance_change(self):
@@ -228,12 +232,13 @@ class Analysis_byCharacter(Utils):
         print("선택하신 등장 인물은 [{}] 입니다.\n".format(self.character))
 
         choice = 0
-        while choice != 4:
+        while choice != 5:
             print("어떤 것을 확인하시겠습니까?\n")
             print("1. 인물 기본 정보")
-            print("2. 다른 캐릭터들과의 상호작용 횟수")
-            print("3. 인물의 중요도 변화")
-            print("4. 뒤로가기")
+            print("2. 인물 키워드")
+            print("3. 다른 캐릭터들과의 상호작용 횟수")
+            print("4. 인물의 중요도 변화")
+            print("5. 뒤로가기")
             try:
                 choice = int(input(":"))
             except:
@@ -241,29 +246,55 @@ class Analysis_byCharacter(Utils):
 
             if choice == 1:
                 Utils.Borderline()
-                print(self.info_dict[self.character])
+                print("<1. 인물 기본 정보> 를 선택하셨습니다.")
+                infos = self.info_dict[self.character].split(".")
+                infos = infos[:-1]
+                for info in infos:
+                    print(info.strip() + ".")
                 print()
                 input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
             elif choice == 2:
                 Utils.Borderline()
-                series = int(input("기준이 되는 어벤져스 시리즈를 입력하세요 (1~4)\n"))
-                df = self.character_interactions(series)
-                print(df)
+                print("<2. 인물 키워드> 를 선택하셨습니다.")
+                n_keywords = input("상위 몇개의 키워드를 반환하시겠습니까?")
+                while not n_keywords.isdigit():
+                    n_keywords = input("상위 몇개의 키워드를 반환하시겠습니까?")
+
+                tfidf_keywords(self.character, int(n_keywords))
                 print()
                 input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
             elif choice == 3:
                 Utils.Borderline()
+                print("<3. 다른 캐릭터들과의 상호작용 횟수> 를 선택하셨습니다.")
+                print("확인하실 어벤져스 시리즈 번호를 입력해주세요 (1~4)")
+                print("1. 어벤져스 (2012)")
+                print("2. 어벤져스: 에이지 오브 울트론 (2015)")
+                print("3. 어벤져스: 인피니티 워 (2018)")
+                print("4. 어벤져스: 엔드게임 (2019)")
+                series = input(": \n")
+                while series not in ["1", "2", "3", "4"]:
+                    series = input("잘못된 입력입니다. 다시 입력하세요.")
+                series = int(series)
+
+                self.character_interactions(series)
+                print()
+                input("되돌아가려면 아무키나 누르세요.")
+                Utils.Borderline()
+
+            elif choice == 4:
+                Utils.Borderline()
+                print("<4. 인물의 중요도 변화>를 선택하셨습니다.")
                 self.character_importance_change()
                 print()
                 input("되돌아가려면 아무키나 누르세요.")
                 Utils.Borderline()
 
 
-            elif choice == 4:
+            elif choice == 5:
                 pass
 
             else:
@@ -307,7 +338,6 @@ class Analysis_bySeries(Utils):
             print("{}. {} & {} ({})".format(i+1, relationships[i][0], relationships[i][1], relationships[i][2]["weight"]))
 
 
-
     def key_characters(self):
         """상위 n개의 핵심인물"""
         top_n = input("상위 몇개의 캐릭터를 보시겠습니까?")
@@ -322,15 +352,22 @@ class Analysis_bySeries(Utils):
             print("{}. {}".format(i+1, top_characters[i]))
 
 
-
     def relationship_visualization(self):
         """인물관계도 출력"""
-        img_path = "avengers{}_viz.png".format(self.series_no)
+        img_path = "Images/avengers{}_viz.png".format(self.series_no)
         img = mpimg.imread(img_path)
-        imgplot = plt.imshow(img)
+        plt.imshow(img)
+        plt.axis("off")
         plt.show()
 
 
+    def sentiment_visualization(self):
+        """인물 간 적대/우호 관계 네트워크 출력"""
+        img_path = "Images/avengers{}_sentiment.png".format(self.series_no)
+        img = mpimg.imread(img_path)
+        plt.imshow(img)
+        plt.axis("off")
+        plt.show()
 
 
     def script(self):
@@ -340,12 +377,13 @@ class Analysis_bySeries(Utils):
         print("선택하신 시리즈는 <{}> 입니다.\n".format(self.series_name))
 
         choice = 0
-        while choice != 4:
+        while choice != 5:
             print("어떤 것을 확인하시겠습니까?\n")
             print("1. 핵심적인 인물 관계")
-            print("2. 핵심 등장인물")
-            print("3. 인물 관계도")
-            print("4. 뒤로가기")
+            print("2. 주요 등장인물")
+            print("3. 전체 네트워크 시각화")
+            print("4. 인물 관계 (적대/우호) 시각화")
+            print("5. 뒤로가기")
             try:
                 choice = int(input(":"))
             except:
@@ -353,6 +391,7 @@ class Analysis_bySeries(Utils):
 
             if choice == 1:
                 Utils.Borderline()
+                print("<1. 핵심적인 인물 관계> 를 선택하셨습니다.")
                 self.character_interactions()
                 print()
                 input("되돌아가려면 아무키나 누르세요.")
@@ -360,6 +399,7 @@ class Analysis_bySeries(Utils):
 
             elif choice == 2:
                 Utils.Borderline()
+                print("<2. 주요 등장인물> 을 선택하셨습니다.")
                 self.key_characters()
                 print()
                 input("되돌아가려면 아무키나 누르세요.")
@@ -367,6 +407,7 @@ class Analysis_bySeries(Utils):
 
             elif choice == 3:
                 Utils.Borderline()
+                print("<3. 전체 네트워크 시각화> 를 선택하셨습니다.")
                 self.relationship_visualization()
                 print()
                 input("되돌아가려면 아무키나 누르세요.")
@@ -374,6 +415,16 @@ class Analysis_bySeries(Utils):
 
 
             elif choice == 4:
+                Utils.Borderline()
+                print("<4. 인물 관계 (적대/우호) 시각화> 를 선택하셨습니다.")
+                print("엣지의 색깔이 파란색에 가까울수록 우호, 빨간색에 가까울수록 적대 관계를 의미합니다.")
+                self.sentiment_visualization()
+                print()
+                input("되돌아가려면 아무키나 누르세요.")
+                Utils.Borderline()
+
+
+            elif choice == 5:
                 pass
 
             else:

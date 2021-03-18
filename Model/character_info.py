@@ -1,4 +1,5 @@
-import selenium
+# 구글에서 마블 캐릭터 별 정보 크롤링
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
@@ -98,5 +99,5 @@ for character in name_dict.keys():
 ################################################################################################
 ################################################################################################
 # 사전 저장
-with open('info_dict.json', 'w') as fp:
+with open('data/info_dict.json', 'w') as fp:
     json.dump(info_dict, fp)
